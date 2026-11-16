@@ -100,8 +100,8 @@ def curva_esquerda(graus):
         # Aplica uma velocidade inicial quando o robô ainda está perto do começo da curva.
         # Applies an initial speed while the robot is still near the start of the turn.
         if abs(angulo) < 10:
-            motor_esquerdo.run(-300)
-            motor_direito.run(300)
+            motor_esquerdo.run(-2000)
+            motor_direito.run(2000)
 
         # Calcula a velocidade a partir da diferença entre o ângulo-alvo e o ângulo atual.
         # Calculates speed from the difference between the target and current angles.
@@ -109,8 +109,8 @@ def curva_esquerda(graus):
         # The divisor 2.5 controls how quickly speed decreases near the target.
         velocidade = (graus - angulo) / 2.5
 
-        motor_esquerdo.run(-velocidade)
-        motor_direito.run(velocidade)
+        motor_esquerdo.run(-velocidade*2.5)
+        motor_direito.run(velocidade*2.5)
         wait(10)
 
     # Freia os motores quando a curva termina.
@@ -137,15 +137,15 @@ def curva_direita(graus):
         # Aplica uma velocidade inicial quando o robô ainda está perto do começo da curva.
         # Applies an initial speed while the robot is still near the start of the turn.
         if abs(angulo) < 10:
-            motor_esquerdo.run(300)
-            motor_direito.run(-300)
+            motor_esquerdo.run(2000)
+            motor_direito.run(-2000)
 
         # Calcula a velocidade a partir da diferença entre o ângulo-alvo e o ângulo atual.
         # Calculates speed from the difference between the target and current angles.
         velocidade = (graus - angulo) / 2.5
 
-        motor_esquerdo.run(velocidade)
-        motor_direito.run(-velocidade)
+        motor_esquerdo.run(velocidade*2.5)
+        motor_direito.run(-velocidade*2.5)
         wait(10)
 
     # Freia os motores quando a curva termina.
@@ -225,23 +225,24 @@ def andar_tras_centimetros(centimetros):
 
     # Converte a distância em centímetros para graus de rotação do motor.
     # Converts the distance in centimeters to motor rotation degrees.
-    alvo = centimetros * 360 / 8.8 / 3.14
+    alvo = (centimetros * 360) / (8.8 * 3.14)
 
     # Inicializa os valores acumulado e anterior usados pelo cálculo PID.
     # Initializes the accumulated and previous values used by the PID calculation.
+    target = 0
     integral = 0
     last_error = 0
 
     # Usa o encoder do motor esquerdo para decidir quando a distância foi percorrida.
     # Uses the left motor encoder to determine when the target distance has been reached.
-    while abs(motor_esquerdo.angle()) < abs(alvo):
+    while abs(motor_direito.angle()) < abs(alvo):
         # Mede o desvio do robô em relação ao ângulo zero.
         # Measures the robot's heading deviation from zero degrees.
-        erro = giroscopio.angle() - 0
+        erro = giroscopio.angle() - target
 
         # Atualiza os termos integral e derivativo.
         # Updates the integral and derivative terms.
-        integral += erro
+        target = integral + erro
         derivativo = erro - last_error
 
         # Calcula a correção PID; atualmente apenas o termo proporcional está ativo.
@@ -250,8 +251,8 @@ def andar_tras_centimetros(centimetros):
 
         # Aplica velocidades negativas para mover o robô para trás e corrigir o rumo.
         # Applies negative speeds to drive backward while correcting the heading.
-        motor_esquerdo.run(-700 - correcao)
-        motor_direito.run(-700 + correcao)
+        motor_esquerdo.run(-700 + correcao)
+        motor_direito.run(-700 - correcao)
 
         # Guarda o erro atual para o próximo cálculo derivativo.
         # Saves the current error for the next derivative calculation.
@@ -345,5 +346,12 @@ print("Inicialização concluída:", cronometro.time(), "ms")
 
 # Sequência principal executada quando o arquivo é iniciado.
 # Main sequence executed when this file starts.
-andar_frente_centimetros(150)
-andar_tras_centimetros(50)
+andar_tras_centimetros(230)
+curva_direita(79)
+wait(100)
+andar_tras_centimetros(21)
+curva_esquerda(75)
+wait(100)
+andar_tras_centimetros(23)
+curva_esquerda(90)
+wait(100)

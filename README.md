@@ -25,7 +25,8 @@ O programa usa **EV3 MicroPython com Pybricks** para controlar o deslocamento do
 | --- | --- |
 | Motor esquerdo de tração | B |
 | Motor direito de tração | C |
-| Motor da garra | A |
+| Motor da garra abre/fecha | A |
+| Motor da garra sobe/desce | D |
 | Giroscópio | S2 |
 
 O código também configura o diâmetro das rodas e a distância entre elas no objeto `DriveBase`. Confira esses valores e as portas antes de executar o programa.
@@ -88,7 +89,8 @@ The program uses **EV3 MicroPython with Pybricks** to control the robot's moveme
 | --- | --- |
 | Left drive motor | B |
 | Right drive motor | C |
-| Gripper motor | A |
+| Gripper motor open/closed | A |
+| Gripper motor up/down | D |
 | Gyroscope | S2 |
 
 The code also configures the wheel diameter and the distance between the wheels in the `DriveBase` object. Check these values and the port connections before running the program.
