@@ -70,6 +70,8 @@ KP = 8
 KI = 0
 KD = 0
 
+velocidade_min_curva = 200  # Velocidade mínima em curvas, em graus por segundo.
+KP_CURVA = 1  # Ganho proporcional usado para reduzir a velocidade em curvas.
 
 def limitar(valor, minimo, maximo):
     """
@@ -96,21 +98,23 @@ def curva_esquerda(graus):
     # Continue while the measured angle is still below the target.
     while abs(giroscopio.angle()) < abs(graus):
         angulo = giroscopio.angle()
+        erro = abs(graus) - abs(giroscopio.angle())
+        velocidade = max(velocidade_min_curva, erro * KP_CURVA)
 
         # Aplica uma velocidade inicial quando o robô ainda está perto do começo da curva.
         # Applies an initial speed while the robot is still near the start of the turn.
         if abs(angulo) < 10:
-            motor_esquerdo.run(-2000)
-            motor_direito.run(2000)
+            motor_esquerdo.run(-velocidade)
+            motor_direito.run(velocidade)
 
         # Calcula a velocidade a partir da diferença entre o ângulo-alvo e o ângulo atual.
         # Calculates speed from the difference between the target and current angles.
         # O divisor 2.5 determina o quanto a velocidade diminui conforme se aproxima do alvo.
         # The divisor 2.5 controls how quickly speed decreases near the target.
-        velocidade = (graus - angulo) / 2.5
+        #velocidade = (graus - angulo) / 2.5
 
-        motor_esquerdo.run(-velocidade*2.5)
-        motor_direito.run(velocidade*2.5)
+        motor_esquerdo.run(-velocidade*1.2)
+        motor_direito.run(velocidade*1.2)
         wait(10)
 
     # Freia os motores quando a curva termina.
@@ -349,9 +353,16 @@ print("Inicialização concluída:", cronometro.time(), "ms")
 andar_tras_centimetros(230)
 curva_direita(79)
 wait(100)
-andar_tras_centimetros(21)
-curva_esquerda(75)
+andar_tras_centimetros(22)
+curva_esquerda(73)
 wait(100)
-andar_tras_centimetros(23)
-curva_esquerda(90)
+andar_tras_centimetros(35)
+curva_esquerda(87)
 wait(100)
+andar_tras_centimetros(12)
+for _ in range(5):
+    velocidade_c = motor_direito.control.limits()[0] * 0.15
+    motor_direito.run_angle(velocidade_c, -120)
+    
+    velocidade_b = motor_esquerdo.control.limits()[0] * 0.15
+    motor_esquerdo.run_angle(velocidade_b, -120)
