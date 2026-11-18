@@ -86,74 +86,100 @@ def limitar(valor, minimo, maximo):
 
 def curva_esquerda(graus):
     """
-    Gira o robô para a esquerda até atingir o ângulo solicitado.
-    Turn the robot left until it reaches the requested angle.
+    Gira o robô para a esquerda até o giroscópio atingir o ângulo solicitado.
+    Turns the robot left until the gyroscope reaches the requested angle.
 
-    O giroscópio é zerado no início, e os motores giram em sentidos opostos.
-    The gyroscope is reset at the start, and the motors run in opposite directions.
+    O sinal das velocidades dos motores faz o motor esquerdo girar para trás
+    e o direito para frente, girando o robô para a esquerda.
+    The motor speed signs make the left motor run backward and the right motor
+    run forward, turning the robot left.
     """
+    # Zera a leitura do giroscópio para medir a curva a partir da posição atual.
+    # Resets the gyroscope reading to measure the turn from the current position.
     giroscopio.reset_angle(0)
 
-    # Continua enquanto o ângulo medido ainda estiver abaixo do alvo.
-    # Continue while the measured angle is still below the target.
+    # Continua enquanto o valor absoluto do ângulo medido for menor que o alvo.
+    # Continue while the absolute measured angle is smaller than the target.
     while abs(giroscopio.angle()) < abs(graus):
+        # Guarda a leitura atual do giroscópio.
+        # Stores the current gyroscope reading.
+        # Calcula quanto falta para atingir o alvo, comparando os valores absolutos.
+        # Calculates the remaining angle by comparing absolute values.
+        # Define a velocidade proporcional ao erro, respeitando uma velocidade mínima.
+        # Sets a speed proportional to the error, while maintaining a minimum speed.
         angulo = giroscopio.angle()
         erro = abs(graus) - abs(giroscopio.angle())
         velocidade = max(velocidade_min_curva, erro * KP_CURVA)
 
-        # Aplica uma velocidade inicial quando o robô ainda está perto do começo da curva.
-        # Applies an initial speed while the robot is still near the start of the turn.
+        # Este comando é executado quando o robô ainda está a menos de 10° do zero.
+        # These commands run while the robot is still within 10° of the starting angle.
         if abs(angulo) < 10:
             motor_esquerdo.run(-velocidade)
             motor_direito.run(velocidade)
 
-        # Calcula a velocidade a partir da diferença entre o ângulo-alvo e o ângulo atual.
-        # Calculates speed from the difference between the target and current angles.
-        # O divisor 2.5 determina o quanto a velocidade diminui conforme se aproxima do alvo.
-        # The divisor 2.5 controls how quickly speed decreases near the target.
-        #velocidade = (graus - angulo) / 2.5
+        # Comanda os motores em sentidos opostos.
+        # A velocidade calculada é multiplicada por 2.5 antes de ser aplicada.
+        # Commands the motors in opposite directions.
+        # The calculated speed is multiplied by 2.5 before being applied.
+        motor_esquerdo.run(-velocidade * 1.7)
+        motor_direito.run(velocidade * 1.7)
 
-        motor_esquerdo.run(-velocidade*1.2)
-        motor_direito.run(velocidade*1.2)
+        # Aguarda 10 milissegundos antes da próxima leitura e atualização.
+        # Waits 10 milliseconds before the next reading and update.
         wait(10)
 
-    # Freia os motores quando a curva termina.
-    # Brakes the motors when the turn is complete.
+    # Aplica o freio aos dois motores ao atingir o ângulo-alvo.
+    # Applies the brake to both motors once the target angle is reached.
     motor_esquerdo.stop(Stop.BRAKE)
     motor_direito.stop(Stop.BRAKE)
 
 
 def curva_direita(graus):
     """
-    Gira o robô para a direita até atingir o ângulo solicitado.
-    Turn the robot right until it reaches the requested angle.
+    Gira o robô para a direita até o giroscópio atingir o ângulo solicitado.
+    Turns the robot right until the gyroscope reaches the requested angle.
 
-    O giroscópio é zerado no início, e os motores giram em sentidos opostos.
-    The gyroscope is reset at the start, and the motors run in opposite directions.
+    O sinal das velocidades dos motores faz o motor esquerdo girar para frente
+    e o direito para trás, girando o robô para a direita.
+    The motor speed signs make the left motor run forward and the right motor
+    run backward, turning the robot right.
     """
+    # Zera a leitura do giroscópio para medir a curva a partir da posição atual.
+    # Resets the gyroscope reading to measure the turn from the current position.
     giroscopio.reset_angle(0)
 
-    # Continua enquanto o ângulo medido ainda estiver abaixo do alvo.
-    # Continue while the measured angle is still below the target.
+    # Continua enquanto o valor absoluto do ângulo medido for menor que o alvo.
+    # Continue while the absolute measured angle is smaller than the target.
     while abs(giroscopio.angle()) < abs(graus):
+        # Guarda a leitura atual do giroscópio.
+        # Stores the current gyroscope reading.
         angulo = giroscopio.angle()
 
-        # Aplica uma velocidade inicial quando o robô ainda está perto do começo da curva.
-        # Applies an initial speed while the robot is still near the start of the turn.
+        # Este comando é executado quando o robô ainda está a menos de 10° do zero.
+        # These commands run while the robot is still within 10° of the starting angle.
         if abs(angulo) < 10:
             motor_esquerdo.run(2000)
             motor_direito.run(-2000)
 
-        # Calcula a velocidade a partir da diferença entre o ângulo-alvo e o ângulo atual.
-        # Calculates speed from the difference between the target and current angles.
+        # Calcula a velocidade a partir da diferença entre o ângulo solicitado
+        # e a leitura atual do giroscópio, preservando o sinal do ângulo.
+        # Calculates speed from the requested angle minus the current gyroscope
+        # reading, preserving the angle's sign.
         velocidade = (graus - angulo) / 2.5
 
-        motor_esquerdo.run(velocidade*2.5)
-        motor_direito.run(-velocidade*2.5)
+        # Comanda os motores em sentidos opostos.
+        # A velocidade calculada é multiplicada por 2.5 antes de ser aplicada.
+        # Commands the motors in opposite directions.
+        # The calculated speed is multiplied by 2.5 before being applied.
+        motor_esquerdo.run(velocidade * 2.5)
+        motor_direito.run(-velocidade * 2.5)
+
+        # Aguarda 10 milissegundos antes da próxima leitura e atualização.
+        # Waits 10 milliseconds before the next reading and update.
         wait(10)
 
-    # Freia os motores quando a curva termina.
-    # Brakes the motors when the turn is complete.
+    # Aplica o freio aos dois motores ao atingir o ângulo-alvo.
+    # Applies the brake to both motors once the target angle is reached.
     motor_esquerdo.stop(Stop.BRAKE)
     motor_direito.stop(Stop.BRAKE)
 
@@ -350,14 +376,16 @@ print("Inicialização concluída:", cronometro.time(), "ms")
 
 # Sequência principal executada quando o arquivo é iniciado.
 # Main sequence executed when this file starts.
+#motor_direito.run_angle(200, 10000)
+
 andar_tras_centimetros(230)
 curva_direita(79)
 wait(100)
-andar_tras_centimetros(22)
-curva_esquerda(73)
+andar_tras_centimetros(20)
+curva_esquerda(69)
 wait(100)
 andar_tras_centimetros(35)
-curva_esquerda(87)
+curva_esquerda(83)
 wait(100)
 andar_tras_centimetros(12)
 for _ in range(5):
