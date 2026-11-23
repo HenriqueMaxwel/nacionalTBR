@@ -70,8 +70,8 @@ KP = 8
 KI = 0
 KD = 0
 
-velocidade_min_curva = 200  # Velocidade mínima em curvas, em graus por segundo.
-KP_CURVA = 1  # Ganho proporcional usado para reduzir a velocidade em curvas.
+velocidade_min_curva = 2000  # Velocidade mínima em curvas, em graus por segundo.
+KP_CURVA = 5  # Ganho proporcional usado para reduzir a velocidade em curvas.
 
 def limitar(valor, minimo, maximo):
     """
@@ -109,20 +109,20 @@ def curva_esquerda(graus):
         # Sets a speed proportional to the error, while maintaining a minimum speed.
         angulo = giroscopio.angle()
         erro = abs(graus) - abs(giroscopio.angle())
-        velocidade = max(velocidade_min_curva, erro * KP_CURVA)
+        velocidade_C = max(velocidade_min_curva, erro * KP_CURVA)
 
         # Este comando é executado quando o robô ainda está a menos de 10° do zero.
         # These commands run while the robot is still within 10° of the starting angle.
         if abs(angulo) < 10:
-            motor_esquerdo.run(-velocidade)
-            motor_direito.run(velocidade)
+            motor_esquerdo.run(-velocidade_C)
+            motor_direito.run(velocidade_C)
 
         # Comanda os motores em sentidos opostos.
         # A velocidade calculada é multiplicada por 2.5 antes de ser aplicada.
         # Commands the motors in opposite directions.
         # The calculated speed is multiplied by 2.5 before being applied.
-        motor_esquerdo.run(-velocidade * 1.7)
-        motor_direito.run(velocidade * 1.7)
+        motor_esquerdo.run(-velocidade_C * 1.7)
+        motor_direito.run(velocidade_C * 1.7)
 
         # Aguarda 10 milissegundos antes da próxima leitura e atualização.
         # Waits 10 milliseconds before the next reading and update.
@@ -157,22 +157,26 @@ def curva_direita(graus):
 
         # Este comando é executado quando o robô ainda está a menos de 10° do zero.
         # These commands run while the robot is still within 10° of the starting angle.
-        if abs(angulo) < 10:
+        '''if abs(angulo) < 10:
             motor_esquerdo.run(2000)
             motor_direito.run(-2000)
+        elif abs(angulo) > 10:
+            motor_esquerdo.run(2000)
+            motor_direito.run(-2000)'''
 
         # Calcula a velocidade a partir da diferença entre o ângulo solicitado
         # e a leitura atual do giroscópio, preservando o sinal do ângulo.
         # Calculates speed from the requested angle minus the current gyroscope
         # reading, preserving the angle's sign.
-        velocidade = (graus - angulo) / 2.5
+        #if angulo - graus < 10:
+        velocidade_B = (graus - angulo) * 2
 
         # Comanda os motores em sentidos opostos.
         # A velocidade calculada é multiplicada por 2.5 antes de ser aplicada.
         # Commands the motors in opposite directions.
         # The calculated speed is multiplied by 2.5 before being applied.
-        motor_esquerdo.run(velocidade * 2.5)
-        motor_direito.run(-velocidade * 2.5)
+        motor_esquerdo.run(velocidade_B * 2.5)
+        motor_direito.run(-velocidade_B * 2.5)
 
         # Aguarda 10 milissegundos antes da próxima leitura e atualização.
         # Waits 10 milliseconds before the next reading and update.
@@ -184,7 +188,7 @@ def curva_direita(graus):
     motor_direito.stop(Stop.BRAKE)
 
 
-def andar_frente_centimetros(centimetros):
+def andar_frente_centimetros(centimetros, velocidade_frente):
     """
     Move o robô para frente pela distância informada em centímetros.
     Drive the robot forward by the specified distance in centimeters.
@@ -228,8 +232,8 @@ def andar_frente_centimetros(centimetros):
         # e subtraída do outro.
         # 700 is the base speed in degrees per second; the correction is added to one
         # side and subtracted from the other.
-        motor_esquerdo.run(700 + correcao)
-        motor_direito.run(700 - correcao)
+        motor_esquerdo.run(velocidade_frente + correcao)
+        motor_direito.run(velocidade_frente - correcao)
 
         # Guarda o erro atual para o próximo cálculo derivativo.
         # Saves the current error for the next derivative calculation.
@@ -242,7 +246,7 @@ def andar_frente_centimetros(centimetros):
     motor_direito.stop(Stop.BRAKE)
 
 
-def andar_tras_centimetros(centimetros):
+def andar_tras_centimetros(centimetros, velocidade_tras):
     """
     Move o robô para trás pela distância informada em centímetros.
     Drive the robot backward by the specified distance in centimeters.
@@ -272,17 +276,18 @@ def andar_tras_centimetros(centimetros):
 
         # Atualiza os termos integral e derivativo.
         # Updates the integral and derivative terms.
-        target = integral + erro
+        integral += erro
+        #target = integral + erro
         derivativo = erro - last_error
 
         # Calcula a correção PID; atualmente apenas o termo proporcional está ativo.
         # Calculates the PID correction; only the proportional term is active right now.
-        correcao = erro * KP + integral * KI + derivativo * KD
+        correcao_tras = erro * KP + integral * KI + derivativo * KD
 
         # Aplica velocidades negativas para mover o robô para trás e corrigir o rumo.
         # Applies negative speeds to drive backward while correcting the heading.
-        motor_esquerdo.run(-700 + correcao)
-        motor_direito.run(-700 - correcao)
+        motor_esquerdo.run(-velocidade_tras - correcao_tras)
+        motor_direito.run(-velocidade_tras + correcao_tras)
 
         # Guarda o erro atual para o próximo cálculo derivativo.
         # Saves the current error for the next derivative calculation.
@@ -376,21 +381,25 @@ print("Inicialização concluída:", cronometro.time(), "ms")
 
 # Sequência principal executada quando o arquivo é iniciado.
 # Main sequence executed when this file starts.
-#motor_direito.run_angle(200, 10000)
+#andar_tras_centimetros(15, 500)
+curva_direita(90)
+#andar_frente_centimetros(20, 400)
 
-andar_tras_centimetros(230)
+# Sequência da segunda parte da missão ROBO-2
+#Sequence of the second part of the ROBO-2 mission
+'''andar_tras_centimetros(230, 700)
 curva_direita(79)
 wait(100)
-andar_tras_centimetros(20)
-curva_esquerda(69)
+andar_tras_centimetros(23, 700)
+curva_esquerda(67)
 wait(100)
-andar_tras_centimetros(35)
-curva_esquerda(83)
+andar_tras_centimetros(35, 700)
+curva_esquerda(80)
 wait(100)
-andar_tras_centimetros(12)
+andar_tras_centimetros(12, 500)
 for _ in range(5):
-    velocidade_c = motor_direito.control.limits()[0] * 0.15
+    velocidade_c = motor_direito.control.limits()[0] * 0.20
     motor_direito.run_angle(velocidade_c, -120)
     
-    velocidade_b = motor_esquerdo.control.limits()[0] * 0.15
-    motor_esquerdo.run_angle(velocidade_b, -120)
+    velocidade_b = motor_esquerdo.control.limits()[0] * 0.20
+    motor_esquerdo.run_angle(velocidade_b, -120)'''
