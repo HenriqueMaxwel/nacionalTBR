@@ -28,11 +28,12 @@ giroscopio = GyroSensor(Port.S2)
 # se o EV3 detectar um motor conectado à porta correspondente.
 # The gripper motors are optional. They start as None and are created
 # only if the EV3 detects a motor connected to the corresponding port.
-motor_garra_abre_fecha = None
+motor_garra_lado = None
 motor_garra_desce_sobe = None
 
 try:
-    motor_garra_abre_fecha = Motor(Port.A)
+    motor_garra_desce_sobe = Motor(Port.A)
+    motor_garra_desce_sobe is not None
     print("Motor A conectado")
 except OSError:
     # O programa pode continuar sem o motor A; as funções da garra verificarão isso.
@@ -40,7 +41,8 @@ except OSError:
     print("Motor A não conectado")
 
 try:
-    motor_garra_desce_sobe = Motor(Port.D)
+    motor_garra_lado = Motor(Port.D)
+    motor_garra_lado is not None
     print("Motor D conectado")
 except OSError:
     # O programa pode continuar sem o motor D.
@@ -169,14 +171,16 @@ def curva_direita(graus):
         # Calculates speed from the requested angle minus the current gyroscope
         # reading, preserving the angle's sign.
         #if angulo - graus < 10:
-        velocidade_B = (graus - angulo) * 2
+        velocidade_B = (graus - angulo) * 5
+        if angulo - graus < 10:
+            velocidade_B = 100
 
         # Comanda os motores em sentidos opostos.
         # A velocidade calculada é multiplicada por 2.5 antes de ser aplicada.
         # Commands the motors in opposite directions.
         # The calculated speed is multiplied by 2.5 before being applied.
-        motor_esquerdo.run(velocidade_B * 2.5)
-        motor_direito.run(-velocidade_B * 2.5)
+        motor_esquerdo.run(velocidade_B )
+        motor_direito.run(-velocidade_B )
 
         # Aguarda 10 milissegundos antes da próxima leitura e atualização.
         # Waits 10 milliseconds before the next reading and update.
@@ -300,14 +304,15 @@ def andar_tras_centimetros(centimetros, velocidade_tras):
     motor_direito.stop(Stop.BRAKE)
 
 
-def abrir_garra(rotacao=2.5):
+def garra_lado_direito(rotacao = 0):
+    motor_garra_lado = Motor(Port.D)
     """
     Abre a garra girando o motor A pelo número de rotações informado.
     Opens the gripper by rotating motor A for the specified number of rotations.
     """
     # Evita chamar métodos de motor se o motor A não foi detectado.
     # Avoids calling motor methods if motor A was not detected.
-    if motor_garra_abre_fecha is None:
+    if motor_garra_lado is None:
         print("Motor da garra abrir/fechar não está conectado. Não é possível abrir a garra.")
         return
 
@@ -317,31 +322,33 @@ def abrir_garra(rotacao=2.5):
 
     # Usa 30% do limite máximo de velocidade do motor, em graus por segundo.
     # Uses 30% of the motor's maximum speed limit, in degrees per second.
-    velocidade = motor_garra_abre_fecha.control.limits()[0] * 0.30
+    velocidade = motor_garra_lado.control.limits()[0] * 0.50
 
-    motor_garra_abre_fecha.run_angle(velocidade, angulo)
-    motor_garra_abre_fecha.stop(Stop.BRAKE)
+    motor_garra_lado.run_angle(velocidade, angulo, wait=False)
+    #motor_garra_lado.stop(Stop.BRAKE)
 
 
-def fechar_garra(rotacao=2.5):
+def garra_lado_esquerdo(rotacao= 0):
+    motor_garra_lado = Motor(Port.D)
     """
     Fecha a garra girando o motor A no sentido oposto.
     Closes the gripper by rotating motor A in the opposite direction.
     """
-    if motor_garra_abre_fecha is None:
+    if motor_garra_lado is None:
         print("Motor da garra abrir/fechar não está conectado. Não é possível fechar a garra.")
         return
 
     # O sinal negativo inverte o sentido do motor.
     # The negative sign reverses the motor direction.
     angulo = -rotacao * 360
-    velocidade = motor_garra_abre_fecha.control.limits()[0] * 0.30
+    velocidade = motor_garra_lado.control.limits()[0] * 0.50
 
-    motor_garra_abre_fecha.run_angle(velocidade, angulo)
-    motor_garra_abre_fecha.stop(Stop.BRAKE)
+    motor_garra_lado.run_angle(velocidade, angulo, wait=False)
+    #motor_garra_lado.stop(Stop.BRAKE)
 
 
-def subir_garra(rotacao=2.5):
+def subir_garra(rotacao= 0):
+    motor_garra_desce_sobe = Motor(Port.A)
     """
     Sobe a garra usando o motor D.
     Raises the gripper using motor D.
@@ -350,14 +357,15 @@ def subir_garra(rotacao=2.5):
         print("Motor da garra subir/descer não está conectado. Não é possível subir a garra.")
         return
 
-    angulo = rotacao * 360
-    velocidade = motor_garra_desce_sobe.control.limits()[0] * 0.30
+    angulo = -rotacao * 360
+    velocidade = motor_garra_desce_sobe.control.limits()[0] * 0.50
 
-    motor_garra_desce_sobe.run_angle(velocidade, angulo)
-    motor_garra_desce_sobe.stop(Stop.BRAKE)
+    motor_garra_desce_sobe.run_angle(velocidade, angulo, wait=False)
+    #motor_garra_desce_sobe.stop(Stop.BRAKE)
 
 
-def descer_garra(rotacao=2.5):
+def descer_garra(rotacao= 0):
+    motor_garra_desce_sobe = Motor(Port.A)
     """
     Desce a garra usando o motor D.
     Lowers the gripper using motor D.
@@ -368,11 +376,11 @@ def descer_garra(rotacao=2.5):
 
     # O sinal negativo inverte o sentido do motor.
     # The negative sign reverses the motor direction.
-    angulo = -rotacao * 360
-    velocidade = motor_garra_desce_sobe.control.limits()[0] * 0.30
+    angulo = rotacao * 360
+    velocidade = motor_garra_desce_sobe.control.limits()[0] * 0.50
 
-    motor_garra_desce_sobe.run_angle(velocidade, angulo)
-    motor_garra_desce_sobe.stop(Stop.BRAKE)
+    motor_garra_desce_sobe.run_angle(velocidade, angulo, wait=False)
+    #motor_garra_desce_sobe.stop(Stop.BRAKE)
 
 
 # Exibe o tempo desde a criação do cronômetro, em milissegundos.
@@ -381,9 +389,20 @@ print("Inicialização concluída:", cronometro.time(), "ms")
 
 # Sequência principal executada quando o arquivo é iniciado.
 # Main sequence executed when this file starts.
-#andar_tras_centimetros(15, 500)
-curva_direita(90)
-#andar_frente_centimetros(20, 400)
+andar_tras_centimetros(9, 400)
+curva_direita(85)
+wait(100)
+garra_lado_esquerdo(1.5)
+andar_frente_centimetros(33, 200)
+wait(2000)
+garra_lado_direito(1.5)
+subir_garra(1)
+wait(100)
+andar_tras_centimetros(40, 200)
+curva_direita(85)
+andar_frente_centimetros(15)
+curva_esquerda(85)
+descer_garra(1)
 
 # Sequência da segunda parte da missão ROBO-2
 #Sequence of the second part of the ROBO-2 mission
