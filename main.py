@@ -68,7 +68,7 @@ robo = DriveBase(
 # KP applies a correction proportional to the current gyroscope error.
 # KI e KD estão em zero; portanto, os termos integral e derivativo não alteram a correção.
 # KI and KD are zero, so the integral and derivative terms do not affect the correction.
-KP = 1
+KP = 2
 KI = 0
 KD = 0
 
@@ -86,7 +86,7 @@ def limitar(valor, minimo, maximo):
     return max(minimo, min(maximo, valor))
 
 
-def curva_esquerda(graus):
+def curva_esquerda(graus_c):
     """
     Gira o robô para a direita até o giroscópio atingir o ângulo solicitado.
     Turns the robot right until the gyroscope reaches the requested angle.
@@ -102,7 +102,7 @@ def curva_esquerda(graus):
     
     # Continua enquanto o valor absoluto do ângulo medido for menor que o alvo.
     # Continue while the absolute measured angle is smaller than the target.
-    while abs(giroscopio.angle()) < abs(graus):
+    while abs(giroscopio.angle()) < abs(graus_c):
         # Guarda a leitura atual do giroscópio.
         # Stores the current gyroscope reading.
         angulo_C = giroscopio.angle()
@@ -111,8 +111,8 @@ def curva_esquerda(graus):
         # e a leitura atual do giroscópio, preservando o sinal do ângulo.
         # Calculates speed from the requested angle minus the current gyroscope
         # reading, preserving the angle's sign.
-        velocidade_C = (graus - angulo_C) * 5
-        if angulo_C - graus < 10:
+        velocidade_C = (graus_c - angulo_C) * 3
+        if angulo_C - graus_c < 10:
             velocidade_C = 100
     
         # Comanda os motores em sentidos opostos.
@@ -167,7 +167,7 @@ def curva_direita(graus):
         # Calculates speed from the requested angle minus the current gyroscope
         # reading, preserving the angle's sign.
         #if angulo - graus < 10:
-        velocidade_B = (graus - angulo) * 5
+        velocidade_B = (graus - angulo) * 3
         if angulo - graus < 10:
             velocidade_B = 100
 
@@ -175,8 +175,8 @@ def curva_direita(graus):
         # A velocidade calculada é multiplicada por 2.5 antes de ser aplicada.
         # Commands the motors in opposite directions.
         # The calculated speed is multiplied by 2.5 before being applied.
-        motor_esquerdo.run(velocidade_B )
-        motor_direito.run(-velocidade_B )
+        motor_esquerdo.run(velocidade_B)
+        motor_direito.run(-velocidade_B)
 
         # Aguarda 10 milissegundos antes da próxima leitura e atualização.
         # Waits 10 milliseconds before the next reading and update.
@@ -232,8 +232,8 @@ def andar_frente_centimetros(centimetros, velocidade_frente):
         # e subtraída do outro.
         # 700 is the base speed in degrees per second; the correction is added to one
         # side and subtracted from the other.
-        motor_esquerdo.run(velocidade_frente + correcao)
-        motor_direito.run(velocidade_frente - correcao)
+        motor_esquerdo.run(velocidade_frente - correcao)
+        motor_direito.run(velocidade_frente + correcao)
 
         # Guarda o erro atual para o próximo cálculo derivativo.
         # Saves the current error for the next derivative calculation.
@@ -286,8 +286,8 @@ def andar_tras_centimetros(centimetros, velocidade_tras):
 
         # Aplica velocidades negativas para mover o robô para trás e corrigir o rumo.
         # Applies negative speeds to drive backward while correcting the heading.
-        motor_esquerdo.run(-velocidade_tras - correcao_tras)
-        motor_direito.run(-velocidade_tras + correcao_tras)
+        motor_esquerdo.run(-velocidade_tras + correcao_tras)
+        motor_direito.run(-velocidade_tras - correcao_tras)
 
         # Guarda o erro atual para o próximo cálculo derivativo.
         # Saves the current error for the next derivative calculation.
@@ -385,21 +385,22 @@ print("Inicialização concluída:", cronometro.time(), "ms")
 
 # Sequência principal executada quando o arquivo é iniciado.
 # Main sequence executed when this file starts.
-andar_tras_centimetros(16, 400)
-curva_direita(78)
-andar_frente_centimetros(33, 200)
-garra_lado_esquerdo(0.6)
-andar_frente_centimetros(5,150)
-subir_garra(1.2)
-garra_lado_direito(0.6)
-andar_tras_centimetros(51, 400)
-curva_direita(77)
+andar_tras_centimetros(13, 300)
+curva_direita(90)
+andar_frente_centimetros(31, 200)
+#garra_lado_esquerdo(0.4)
+andar_frente_centimetros(6,150)
+subir_garra(0.8)
+#garra_lado_direito(0.4)
+andar_tras_centimetros(43, 400)
+curva_direita(90)
 garra_lado_esquerdo(1.5)
 andar_frente_centimetros(44, 300)
 garra_lado_direito(1.5)
-andar_tras_centimetros(45, 400)
-curva_esquerda(83)
-descer_garra(1.2)
+'''andar_tras_centimetros(45, 400)
+curva_esquerda(83)'''
+descer_garra(0.8)
+
 
 # Sequência da segunda parte da missão ROBO-2
 #Sequence of the second part of the ROBO-2 mission
