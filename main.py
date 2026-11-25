@@ -68,12 +68,12 @@ robo = DriveBase(
 # KP applies a correction proportional to the current gyroscope error.
 # KI e KD estão em zero; portanto, os termos integral e derivativo não alteram a correção.
 # KI and KD are zero, so the integral and derivative terms do not affect the correction.
-KP = 8
+KP = 1
 KI = 0
 KD = 0
 
 velocidade_min_curva = 2000  # Velocidade mínima em curvas, em graus por segundo.
-KP_CURVA = 5  # Ganho proporcional usado para reduzir a velocidade em curvas.
+KP_CURVA = 2  # Ganho proporcional usado para reduzir a velocidade em curvas.
 
 def limitar(valor, minimo, maximo):
     """
@@ -88,50 +88,46 @@ def limitar(valor, minimo, maximo):
 
 def curva_esquerda(graus):
     """
-    Gira o robô para a esquerda até o giroscópio atingir o ângulo solicitado.
-    Turns the robot left until the gyroscope reaches the requested angle.
-
-    O sinal das velocidades dos motores faz o motor esquerdo girar para trás
-    e o direito para frente, girando o robô para a esquerda.
-    The motor speed signs make the left motor run backward and the right motor
-    run forward, turning the robot left.
+    Gira o robô para a direita até o giroscópio atingir o ângulo solicitado.
+    Turns the robot right until the gyroscope reaches the requested angle.
+    
+    O sinal das velocidades dos motores faz o motor esquerdo girar para frente
+    e o direito para trás, girando o robô para a direita.
+    The motor speed signs make the left motor run forward and the right motor
+    run backward, turning the robot right.
     """
     # Zera a leitura do giroscópio para medir a curva a partir da posição atual.
     # Resets the gyroscope reading to measure the turn from the current position.
     giroscopio.reset_angle(0)
-
+    
     # Continua enquanto o valor absoluto do ângulo medido for menor que o alvo.
     # Continue while the absolute measured angle is smaller than the target.
     while abs(giroscopio.angle()) < abs(graus):
         # Guarda a leitura atual do giroscópio.
         # Stores the current gyroscope reading.
-        # Calcula quanto falta para atingir o alvo, comparando os valores absolutos.
-        # Calculates the remaining angle by comparing absolute values.
-        # Define a velocidade proporcional ao erro, respeitando uma velocidade mínima.
-        # Sets a speed proportional to the error, while maintaining a minimum speed.
-        angulo = giroscopio.angle()
-        erro = abs(graus) - abs(giroscopio.angle())
-        velocidade_C = max(velocidade_min_curva, erro * KP_CURVA)
-
-        # Este comando é executado quando o robô ainda está a menos de 10° do zero.
-        # These commands run while the robot is still within 10° of the starting angle.
-        if abs(angulo) < 10:
-            motor_esquerdo.run(-velocidade_C)
-            motor_direito.run(velocidade_C)
-
+        angulo_C = giroscopio.angle()
+    
+        # Calcula a velocidade a partir da diferença entre o ângulo solicitado
+        # e a leitura atual do giroscópio, preservando o sinal do ângulo.
+        # Calculates speed from the requested angle minus the current gyroscope
+        # reading, preserving the angle's sign.
+        velocidade_C = (graus - angulo_C) * 5
+        if angulo_C - graus < 10:
+            velocidade_C = 100
+    
         # Comanda os motores em sentidos opostos.
         # A velocidade calculada é multiplicada por 2.5 antes de ser aplicada.
         # Commands the motors in opposite directions.
         # The calculated speed is multiplied by 2.5 before being applied.
-        motor_esquerdo.run(-velocidade_C * 1.7)
-        motor_direito.run(velocidade_C * 1.7)
-
+        motor_esquerdo.run(-velocidade_C)
+        motor_direito.run(velocidade_C)
+    
         # Aguarda 10 milissegundos antes da próxima leitura e atualização.
         # Waits 10 milliseconds before the next reading and update.
         wait(10)
-
-    # Aplica o freio aos dois motores ao atingir o ângulo-alvo.
-    # Applies the brake to both motors once the target angle is reached.
+    
+        # Aplica o freio aos dois motores ao atingir o ângulo-alvo.
+        # Applies the brake to both motors once the target angle is reached.
     motor_esquerdo.stop(Stop.BRAKE)
     motor_direito.stop(Stop.BRAKE)
 
@@ -304,7 +300,7 @@ def andar_tras_centimetros(centimetros, velocidade_tras):
     motor_direito.stop(Stop.BRAKE)
 
 
-def garra_lado_direito(rotacao = 0):
+def garra_lado_direito(rotacao = 0, esperar=True):
     motor_garra_lado = Motor(Port.D)
     """
     Abre a garra girando o motor A pelo número de rotações informado.
@@ -324,11 +320,11 @@ def garra_lado_direito(rotacao = 0):
     # Uses 30% of the motor's maximum speed limit, in degrees per second.
     velocidade = motor_garra_lado.control.limits()[0] * 0.50
 
-    motor_garra_lado.run_angle(velocidade, angulo, wait=False)
+    motor_garra_lado.run_angle(velocidade, angulo, wait=esperar)
     #motor_garra_lado.stop(Stop.BRAKE)
 
 
-def garra_lado_esquerdo(rotacao= 0):
+def garra_lado_esquerdo(rotacao= 0, esperar=True):
     motor_garra_lado = Motor(Port.D)
     """
     Fecha a garra girando o motor A no sentido oposto.
@@ -343,11 +339,11 @@ def garra_lado_esquerdo(rotacao= 0):
     angulo = -rotacao * 360
     velocidade = motor_garra_lado.control.limits()[0] * 0.50
 
-    motor_garra_lado.run_angle(velocidade, angulo, wait=False)
+    motor_garra_lado.run_angle(velocidade, angulo, wait=esperar)
     #motor_garra_lado.stop(Stop.BRAKE)
 
 
-def subir_garra(rotacao= 0):
+def subir_garra(rotacao=0, esperar=True):
     motor_garra_desce_sobe = Motor(Port.A)
     """
     Sobe a garra usando o motor D.
@@ -360,11 +356,11 @@ def subir_garra(rotacao= 0):
     angulo = -rotacao * 360
     velocidade = motor_garra_desce_sobe.control.limits()[0] * 0.50
 
-    motor_garra_desce_sobe.run_angle(velocidade, angulo, wait=False)
+    motor_garra_desce_sobe.run_angle(velocidade, angulo, wait=esperar)
     #motor_garra_desce_sobe.stop(Stop.BRAKE)
 
 
-def descer_garra(rotacao= 0):
+def descer_garra(rotacao= 0, esperar=True):
     motor_garra_desce_sobe = Motor(Port.A)
     """
     Desce a garra usando o motor D.
@@ -379,7 +375,7 @@ def descer_garra(rotacao= 0):
     angulo = rotacao * 360
     velocidade = motor_garra_desce_sobe.control.limits()[0] * 0.50
 
-    motor_garra_desce_sobe.run_angle(velocidade, angulo, wait=False)
+    motor_garra_desce_sobe.run_angle(velocidade, angulo, wait=esperar)
     #motor_garra_desce_sobe.stop(Stop.BRAKE)
 
 
@@ -389,20 +385,21 @@ print("Inicialização concluída:", cronometro.time(), "ms")
 
 # Sequência principal executada quando o arquivo é iniciado.
 # Main sequence executed when this file starts.
-andar_tras_centimetros(9, 400)
-curva_direita(85)
-wait(100)
-garra_lado_esquerdo(1.5)
+andar_tras_centimetros(16, 400)
+curva_direita(78)
 andar_frente_centimetros(33, 200)
-wait(2000)
+garra_lado_esquerdo(0.6)
+andar_frente_centimetros(5,150)
+subir_garra(1.2)
+garra_lado_direito(0.6)
+andar_tras_centimetros(51, 400)
+curva_direita(77)
+garra_lado_esquerdo(1.5)
+andar_frente_centimetros(44, 300)
 garra_lado_direito(1.5)
-subir_garra(1)
-wait(100)
-andar_tras_centimetros(40, 200)
-curva_direita(85)
-andar_frente_centimetros(15)
-curva_esquerda(85)
-descer_garra(1)
+andar_tras_centimetros(45, 400)
+curva_esquerda(83)
+descer_garra(1.2)
 
 # Sequência da segunda parte da missão ROBO-2
 #Sequence of the second part of the ROBO-2 mission
