@@ -22,32 +22,23 @@ ev3 = EV3Brick()
 # Configures the drive motors and gyroscope on the ports used.
 motor_esquerdo = Motor(Port.B)
 motor_direito = Motor(Port.C)
-giroscopio = GyroSensor(Port.S2)
+giroscopio = GyroSensor(Port.S1)
 
 # Os motores da garra são opcionais. Começam como None e só são criados
 # se o EV3 detectar um motor conectado à porta correspondente.
 # The gripper motors are optional. They start as None and are created
 # only if the EV3 detects a motor connected to the corresponding port.
-motor_garra_lado = None
 motor_garra_desce_sobe = None
 
 try:
-    motor_garra_desce_sobe = Motor(Port.A)
+    motor_garra_desce_sobe = Motor(Port.D)
     motor_garra_desce_sobe is not None
-    print("Motor A conectado")
+    print("Motor D conectado")
 except OSError:
     # O programa pode continuar sem o motor A; as funções da garra verificarão isso.
     # The program can continue without motor A; the gripper functions check for this.
-    print("Motor A não conectado")
-
-try:
-    motor_garra_lado = Motor(Port.D)
-    motor_garra_lado is not None
-    print("Motor D conectado")
-except OSError:
-    # O programa pode continuar sem o motor D.
-    # The program can continue without motor D.
     print("Motor D não conectado")
+
 
 # Define a geometria do robô em milímetros: diâmetro da roda e distância entre rodas.
 # Define the robot geometry in millimeters: wheel diameter and axle track.
@@ -300,51 +291,8 @@ def andar_tras_centimetros(centimetros, velocidade_tras):
     motor_direito.stop(Stop.BRAKE)
 
 
-def garra_lado_direito(rotacao = 0, esperar=True):
-    motor_garra_lado = Motor(Port.D)
-    """
-    Abre a garra girando o motor A pelo número de rotações informado.
-    Opens the gripper by rotating motor A for the specified number of rotations.
-    """
-    # Evita chamar métodos de motor se o motor A não foi detectado.
-    # Avoids calling motor methods if motor A was not detected.
-    if motor_garra_lado is None:
-        print("Motor da garra abrir/fechar não está conectado. Não é possível abrir a garra.")
-        return
-
-    # Converte rotações completas para graus, pois run_angle usa graus.
-    # Converts full rotations to degrees because run_angle uses degrees.
-    angulo = rotacao * 360
-
-    # Usa 30% do limite máximo de velocidade do motor, em graus por segundo.
-    # Uses 30% of the motor's maximum speed limit, in degrees per second.
-    velocidade = motor_garra_lado.control.limits()[0] * 0.50
-
-    motor_garra_lado.run_angle(velocidade, angulo, wait=esperar)
-    #motor_garra_lado.stop(Stop.BRAKE)
-
-
-def garra_lado_esquerdo(rotacao= 0, esperar=True):
-    motor_garra_lado = Motor(Port.D)
-    """
-    Fecha a garra girando o motor A no sentido oposto.
-    Closes the gripper by rotating motor A in the opposite direction.
-    """
-    if motor_garra_lado is None:
-        print("Motor da garra abrir/fechar não está conectado. Não é possível fechar a garra.")
-        return
-
-    # O sinal negativo inverte o sentido do motor.
-    # The negative sign reverses the motor direction.
-    angulo = -rotacao * 360
-    velocidade = motor_garra_lado.control.limits()[0] * 0.50
-
-    motor_garra_lado.run_angle(velocidade, angulo, wait=esperar)
-    #motor_garra_lado.stop(Stop.BRAKE)
-
-
 def subir_garra(rotacao=0, esperar=True):
-    motor_garra_desce_sobe = Motor(Port.A)
+    motor_garra_desce_sobe = Motor(Port.D)
     """
     Sobe a garra usando o motor D.
     Raises the gripper using motor D.
@@ -361,7 +309,7 @@ def subir_garra(rotacao=0, esperar=True):
 
 
 def descer_garra(rotacao= 0, esperar=True):
-    motor_garra_desce_sobe = Motor(Port.A)
+    motor_garra_desce_sobe = Motor(Port.D)
     """
     Desce a garra usando o motor D.
     Lowers the gripper using motor D.
@@ -385,19 +333,16 @@ print("Inicialização concluída:", cronometro.time(), "ms")
 
 # Sequência principal executada quando o arquivo é iniciado.
 # Main sequence executed when this file starts.
-andar_tras_centimetros(13, 300)
-curva_direita(90)
-andar_frente_centimetros(31, 200)
-#garra_lado_esquerdo(0.4)
-andar_frente_centimetros(6,150)
+andar_frente_centimetros(11, 400)
+curva_direita(94)
+andar_tras_centimetros(44, 350)
+andar_tras_centimetros(6,100)
 subir_garra(0.8)
-#garra_lado_direito(0.4)
-andar_tras_centimetros(43, 400)
+andar_frente_centimetros(42, 400)
 curva_direita(90)
-garra_lado_esquerdo(1.5)
-andar_frente_centimetros(44, 300)
+'''andar_frente_centimetros(44, 300)
 garra_lado_direito(1.5)
-'''andar_tras_centimetros(45, 400)
+andar_tras_centimetros(45, 400)
 curva_esquerda(83)'''
 descer_garra(0.8)
 
